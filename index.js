@@ -480,14 +480,26 @@
   }
   function renderRuntime() {
     if (!preview || !ghost) return;
-    const previewHidden = !modeAllows("translate") || !settings().previewVisible;
+    const s = settings();
+    if (!s.enabled) {
+      document.getElementById(PREVIEW_TOGGLE_ID)?.remove();
+      document.getElementById(AUTOCOMPLETE_BUTTON_ID)?.remove();
+      document.getElementById(SOURCE_SELECT_ID)?.remove();
+      preview.hidden = true;
+      ghost.hidden = true;
+      return;
+    }
+    if (!document.getElementById(PREVIEW_TOGGLE_ID) || !document.getElementById(AUTOCOMPLETE_BUTTON_ID) || !document.getElementById(SOURCE_SELECT_ID)) {
+      normalizeRuntimePlacement();
+    }
+    const previewHidden = !modeAllows("translate") || !s.previewVisible;
     preview.hidden = previewHidden;
     const source = document.getElementById(SOURCE_SELECT_ID);
     if (source) source.hidden = previewHidden;
     const previewToggle = document.getElementById(PREVIEW_TOGGLE_ID);
-    if (previewToggle) previewToggle.hidden = !settings().enabled || !settings().translationEnabled;
+    if (previewToggle) previewToggle.hidden = !s.translationEnabled;
     const autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
-    if (autocompleteButton) autocompleteButton.hidden = !modeAllows("inline") || !settings().manualAutocomplete;
+    if (autocompleteButton) autocompleteButton.hidden = !modeAllows("inline") || !s.manualAutocomplete;
     ghost.hidden = !modeAllows("inline") || !completion;
     syncPreviewControls();
     renderTranslation();
