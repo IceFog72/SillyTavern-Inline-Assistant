@@ -1,0 +1,30 @@
+{
+  "name": "sillytavern-inline-assistant",
+  "version": "0.1.0",
+  "description": "SillyTavern extension for inline completion and translation preview.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "build": "tsc --outDir dist && cp dist/index.js index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IceFog72/SillyTavern-Inline-Assistant.git"
+  },
+  "keywords": [
+    "sillytavern",
+    "extension",
+    "autocomplete",
+    "translation"
+  ],
+  "author": "IceFog72",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IceFog72/SillyTavern-Inline-Assistant/issues"
+  },
+  "homepage": "https://github.com/IceFog72/SillyTavern-Inline-Assistant#readme",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
