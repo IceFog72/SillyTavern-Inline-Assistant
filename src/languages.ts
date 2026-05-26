@@ -7,7 +7,14 @@ export function normalizeLanguageValue(value, fallback) {
 export function selectOption(select, value) {
     const normalized = normalizeLanguageValue(value, value);
     select.value = normalized;
-    if (select.value !== normalized && select.options.length > 0) select.selectedIndex = 0;
+    if (select.value === normalized || !normalized) return;
+
+    const option = document.createElement('option');
+    option.value = normalized;
+    option.textContent = String(normalized);
+    option.dataset.inlineAssistantSynthetic = 'true';
+    select.append(option);
+    select.value = normalized;
 }
 
 export function fillLanguageSelect(select, allowAuto) {

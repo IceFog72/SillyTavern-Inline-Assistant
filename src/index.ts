@@ -30,7 +30,8 @@ function bindInput(id, key, type = 'value') {
     const s = settings();
     if (type === 'checked' && element instanceof HTMLInputElement) element.checked = Boolean(s[key]);
     else element.value = s[key];
-    element.addEventListener(type === 'checked' ? 'change' : 'input', () => {
+    const eventName = type === 'checked' || element instanceof HTMLSelectElement ? 'change' : 'input';
+    element.addEventListener(eventName, () => {
         s[key] = type === 'checked' && element instanceof HTMLInputElement ? element.checked : element.type === 'number' ? Number(element.value) : element.value;
         save();
         renderSettingsVisibility();

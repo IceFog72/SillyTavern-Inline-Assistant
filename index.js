@@ -70,7 +70,7 @@
     minChars: 3,
     debug: false,
     autocompleteProfile: "current",
-    completionPrompt: "Continue the draft response on user message. Return only the continuation text, no quotes, no explanation.\n\nCurrent draft:\n{{input}}",
+    completionPrompt: "Continue message draft. Return only the continuation text, no quotes, no explanation.\n\nCurrent draft:\n{{input}}",
     maxCompletionLength: 80,
     temperature: 0.3,
     lastMessagesCount: 3,
@@ -98,7 +98,13 @@
   function selectOption(select, value) {
     const normalized = normalizeLanguageValue(value, value);
     select.value = normalized;
-    if (select.value !== normalized && select.options.length > 0) select.selectedIndex = 0;
+    if (select.value === normalized || !normalized) return;
+    const option = document.createElement("option");
+    option.value = normalized;
+    option.textContent = String(normalized);
+    option.dataset.inlineAssistantSynthetic = "true";
+    select.append(option);
+    select.value = normalized;
   }
   function fillLanguageSelect(select, allowAuto) {
     select.innerHTML = "";
@@ -193,7 +199,8 @@
     const s = settings();
     if (type === "checked" && element instanceof HTMLInputElement) element.checked = Boolean(s[key]);
     else element.value = s[key];
-    element.addEventListener(type === "checked" ? "change" : "input", () => {
+    const eventName = type === "checked" || element instanceof HTMLSelectElement ? "change" : "input";
+    element.addEventListener(eventName, () => {
       s[key] = type === "checked" && element instanceof HTMLInputElement ? element.checked : element.type === "number" ? Number(element.value) : element.value;
       save();
       renderSettingsVisibility();
