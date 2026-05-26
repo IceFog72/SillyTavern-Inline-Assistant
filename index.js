@@ -88,7 +88,6 @@
     triggerSentence: true,
     triggerNewline: true,
     triggerDebounce: true,
-    swapLanguages: true,
     previewVisible: true
   });
 
@@ -237,7 +236,6 @@
     bindInput("ia_trigger_sentence", "triggerSentence", "checked");
     bindInput("ia_trigger_newline", "triggerNewline", "checked");
     bindInput("ia_trigger_debounce", "triggerDebounce", "checked");
-    bindInput("ia_swap_languages", "swapLanguages", "checked");
     const s = settings();
     selectOption(source, s.sourceLanguage);
     selectOption(target, s.targetLanguage);
@@ -332,17 +330,22 @@
     target.className = "text_pole inline-assistant-language-select";
     fillLanguageSelect(target, false);
     target.addEventListener("change", () => updateLanguage("targetLanguage", target.value));
+    const languageControls = document.createElement("div");
+    languageControls.className = "inline-assistant-language-controls";
+    languageControls.append(
+      target,
+      makeButton("Swap languages", "fa-right-left", swapLanguages)
+    );
     const output = document.createElement("div");
     output.className = "inline-assistant-preview-output";
     output.textContent = "Translation preview";
     const buttons = document.createElement("div");
     buttons.className = "inline-assistant-button-row";
     buttons.append(
-      makeButton("Swap text", "fa-right-left", swapText),
       makeButton("Replace input", "fa-arrow-down", replaceInput),
       makeButton("Copy translation", "fa-copy", copyTranslation)
     );
-    row.append(target, output, buttons);
+    row.append(languageControls, output, buttons);
     panel.append(row);
     return panel;
   }
@@ -787,17 +790,12 @@ Predict the user's next typed text. The recent chat roles are intentionally inve
     save();
     scheduleWork("settings");
   }
-  function swapText() {
-    if (!textarea || !translationText) return;
-    const original = textarea.value;
-    textarea.value = translationText;
-    translationText = original;
-    if (settings().swapLanguages && settings().sourceLanguage !== "auto") {
-      const s = settings();
-      [s.sourceLanguage, s.targetLanguage] = [s.targetLanguage, s.sourceLanguage];
-      save();
-    }
-    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  function swapLanguages() {
+    const s = settings();
+    if (s.sourceLanguage === "auto") return;
+    [s.sourceLanguage, s.targetLanguage] = [s.targetLanguage, s.sourceLanguage];
+    save();
+    scheduleWork("settings");
     renderRuntime();
   }
   function replaceInput() {

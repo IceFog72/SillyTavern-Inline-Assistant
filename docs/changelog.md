@@ -5,6 +5,7 @@
 - Replaced single Mode select with independent Inline completion and Translation preview toggles.
 - Migrates legacy `mode` setting into `inlineEnabled` and `translationEnabled`.
 - Global Enabled switch now hides extension runtime buttons through feature gating.
+- Changed Swap text action into language-only swap beside target language selector.
 
 ## 0.1.0 TypeScript rewrite
 

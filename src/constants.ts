@@ -60,6 +60,5 @@ export const DEFAULT_SETTINGS = Object.freeze({
     triggerSentence: true,
     triggerNewline: true,
     triggerDebounce: true,
-    swapLanguages: true,
     previewVisible: true,
 });
