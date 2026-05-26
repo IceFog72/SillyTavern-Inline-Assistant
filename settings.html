@@ -1,0 +1,133 @@
+<div id="inline_assistant_settings" class="inline-assistant-extension">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Inline Assistant</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down interactable" tabindex="0" role="button"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="inline-assistant-settings-body">
+                <label class="checkbox_label">
+                    <input id="ia_enabled" type="checkbox" />
+                    <span>Enabled</span>
+                </label>
+
+                <label>
+                    <span>Mode</span>
+                    <select id="ia_mode" class="text_pole">
+                        <option value="inline">Inline completion</option>
+                        <option value="translate">Translate preview</option>
+                        <option value="both">Both</option>
+                    </select>
+                </label>
+
+                <div class="inline-assistant-grid">
+                    <label>
+                        <span>Debounce (ms)</span>
+                        <input id="ia_debounce_ms" class="text_pole" type="number" min="100" step="50" />
+                    </label>
+                    <label>
+                        <span>Minimum characters</span>
+                        <input id="ia_min_chars" class="text_pole" type="number" min="0" step="1" />
+                    </label>
+                </div>
+
+                <label class="checkbox_label">
+                    <input id="ia_debug" type="checkbox" />
+                    <span>Debug logging</span>
+                </label>
+
+                <hr />
+
+                <h4>Inline completion</h4>
+                <label>
+                    <span>Connection profile</span>
+                    <select id="ia_autocomplete_profile" class="text_pole">
+                        <option value="current">Current Connection Manager profile</option>
+                    </select>
+                </label>
+                <div class="inline-assistant-grid">
+                    <label>
+                        <span>Max completion length</span>
+                        <input id="ia_max_completion_length" class="text_pole" type="number" min="5" step="5" />
+                    </label>
+                    <label>
+                        <span>Temperature</span>
+                        <input id="ia_temperature" class="text_pole" type="number" min="0" max="2" step="0.1" />
+                    </label>
+                </div>
+                <label>
+                    <span>Last messages count</span>
+                    <input id="ia_last_messages_count" class="text_pole" type="number" min="0" max="50" step="1" />
+                </label>
+                <label class="checkbox_label">
+                    <input id="ia_completion_word_space" type="checkbox" />
+                    <span>Only complete after word + space</span>
+                </label>
+                <label class="checkbox_label">
+                    <input id="ia_completion_debounce" type="checkbox" />
+                    <span>Autocomplete after delay</span>
+                </label>
+                <label class="checkbox_label">
+                    <input id="ia_manual_autocomplete" type="checkbox" />
+                    <span>Manual autocomplete button only</span>
+                </label>
+                <label>
+                    <span class="inline-assistant-label-row">
+                        <span>Completion prompt</span>
+                        <button id="ia_reset_completion_prompt" type="button" class="menu_button menu_button_icon" title="Reset completion prompt">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </span>
+                    <textarea id="ia_completion_prompt" class="textarea_compact" rows="5"></textarea>
+                </label>
+
+                <hr />
+
+                <h4>Translation</h4>
+                <div class="inline-assistant-grid">
+                    <label>
+                        <span>Source language</span>
+                        <select id="ia_source_language" class="text_pole"></select>
+                    </label>
+                    <label>
+                        <span>Target language</span>
+                        <select id="ia_target_language" class="text_pole"></select>
+                    </label>
+                </div>
+                <label>
+                    <span>Translation engine</span>
+                    <select id="ia_translation_engine" class="text_pole">
+                        <option value="st-api">SillyTavern translation API</option>
+                        <option value="llm">LLM connection profile</option>
+                    </select>
+                </label>
+                <label>
+                    <span>LLM translation profile</span>
+                    <select id="ia_translation_profile" class="text_pole">
+                        <option value="autocomplete-profile">Same as autocomplete</option>
+                        <option value="current">Current active connection</option>
+                    </select>
+                </label>
+                <label>
+                    <span class="inline-assistant-label-row">
+                        <span>Translation prompt</span>
+                        <button id="ia_reset_translation_prompt" type="button" class="menu_button menu_button_icon" title="Reset translation prompt">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </span>
+                    <textarea id="ia_translation_prompt" class="textarea_compact" rows="5"></textarea>
+                </label>
+                <div class="inline-assistant-trigger-list">
+                    <label class="checkbox_label"><input id="ia_trigger_word" type="checkbox" /> Word boundary</label>
+                    <label class="checkbox_label"><input id="ia_trigger_sentence" type="checkbox" /> Sentence punctuation</label>
+                    <label class="checkbox_label"><input id="ia_trigger_newline" type="checkbox" /> Newline</label>
+                    <label class="checkbox_label"><input id="ia_trigger_debounce" type="checkbox" /> Debounce</label>
+                </div>
+                <label class="checkbox_label">
+                    <input id="ia_swap_languages" type="checkbox" />
+                    <span>Swap languages when swapping text</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
