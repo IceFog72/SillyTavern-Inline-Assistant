@@ -33,6 +33,7 @@ function bindInput(id, key, type = 'value') {
     element.addEventListener(type === 'checked' ? 'change' : 'input', () => {
         s[key] = type === 'checked' && element instanceof HTMLInputElement ? element.checked : element.type === 'number' ? Number(element.value) : element.value;
         save();
+        renderSettingsVisibility();
         renderRuntime();
         scheduleWork('settings');
     });
@@ -80,7 +81,15 @@ async function injectSettings() {
     const s = settings();
     selectOption(source, s.sourceLanguage);
     selectOption(target, s.targetLanguage);
+    renderSettingsVisibility();
     await populateConnectionProfileSelects();
+}
+
+function renderSettingsVisibility() {
+    const showLlmTranslation = settings().translationEngine === 'llm';
+    document.querySelectorAll('.inline-assistant-llm-translation-setting').forEach((element) => {
+        if (element instanceof HTMLElement) element.hidden = !showLlmTranslation;
+    });
 }
 
 function bindResetButton(buttonId, inputId, key) {
