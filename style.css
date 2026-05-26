@@ -129,6 +129,10 @@
     order: 3;
 }
 
+.stih--buttons {
+    order: 3;
+}
+
 #inline_assistant_source_language {
     order: 4;
 }
