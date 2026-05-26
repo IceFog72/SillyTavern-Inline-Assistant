@@ -1,67 +1,7 @@
-const MODULE_NAME = 'inlineAssistant';
-const SETTINGS_PANEL_ID = 'inline_assistant_settings';
-const PREVIEW_ID = 'inline_assistant_preview';
-const GHOST_ID = 'inline_assistant_ghost';
-const SOURCE_SELECT_ID = 'inline_assistant_source_language';
-const EDITOR_CELL_ID = 'inline_assistant_editor_cell';
-const PREVIEW_TOGGLE_ID = 'inline_assistant_preview_toggle';
-const AUTOCOMPLETE_BUTTON_ID = 'inline_assistant_autocomplete_button';
+import { AUTOCOMPLETE_BUTTON_ID, DEFAULT_SETTINGS, EDITOR_CELL_ID, GHOST_ID, PREVIEW_ID, PREVIEW_TOGGLE_ID, SETTINGS_PANEL_ID, SOURCE_SELECT_ID } from './constants.js';
+import { context, log, save, settings } from './settings-store.js';
+import { compactSelectedLanguageLabel, fillLanguageSelect, getLanguageOptions, normalizeLanguageValue, selectOption } from './languages.js';
 
-const FALLBACK_LANGUAGE_OPTIONS = [
-    ['auto', 'Auto detect'],
-    ['en', 'English'],
-    ['es', 'Spanish'],
-    ['fr', 'French'],
-    ['de', 'German'],
-    ['it', 'Italian'],
-    ['ja', 'Japanese'],
-    ['ko', 'Korean'],
-    ['zh-CN', 'Chinese (Simplified)'],
-    ['pt', 'Portuguese'],
-    ['ru', 'Russian'],
-];
-
-const LEGACY_LANGUAGE_VALUES = Object.freeze({
-    English: 'en',
-    Spanish: 'es',
-    French: 'fr',
-    German: 'de',
-    Italian: 'it',
-    Japanese: 'ja',
-    Korean: 'ko',
-    Chinese: 'zh-CN',
-    Portuguese: 'pt',
-    Russian: 'ru',
-});
-
-const DEFAULT_SETTINGS = Object.freeze({
-    enabled: true,
-    mode: 'both',
-    debounceMs: 500,
-    minChars: 3,
-    debug: false,
-    autocompleteProfile: 'current',
-    completionPrompt: 'Continue the draft response on user message. Return only the continuation text, no quotes, no explanation.\n\nCurrent draft:\n{{input}}',
-    maxCompletionLength: 80,
-    temperature: 0.3,
-    lastMessagesCount: 3,
-    completionWordSpace: true,
-    completionDebounce: true,
-    manualAutocomplete: false,
-    acceptKey: 'Tab',
-    dismissKey: 'Escape',
-    sourceLanguage: 'auto',
-    targetLanguage: 'en',
-    translationEngine: 'st-api',
-    translationProfile: 'autocomplete-profile',
-    translationPrompt: 'Translate the text from {{sourceLanguage}} to {{targetLanguage}}.\nPreserve meaning, tone, punctuation, and line breaks.\nReturn only translated text. No notes, no quotes.\n\nText:\n{{input}}',
-    triggerWord: true,
-    triggerSentence: true,
-    triggerNewline: true,
-    triggerDebounce: true,
-    swapLanguages: true,
-    previewVisible: true,
-});
 
 let textarea = null;
 let wrapper = null;
@@ -79,75 +19,9 @@ let connectionModulePromise = null;
 let bindQueued = false;
 let normalizingDom = false;
 
-function context() {
-    return SillyTavern.getContext();
-}
-
-function settings() {
-    const ctx = context();
-    ctx.extensionSettings[MODULE_NAME] ??= structuredClone(DEFAULT_SETTINGS);
-    const current = ctx.extensionSettings[MODULE_NAME];
-    for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-        current[key] ??= value;
-    }
-    current.sourceLanguage = normalizeLanguageValue(current.sourceLanguage, DEFAULT_SETTINGS.sourceLanguage);
-    current.targetLanguage = normalizeLanguageValue(current.targetLanguage, DEFAULT_SETTINGS.targetLanguage);
-    return current;
-}
-
-function normalizeLanguageValue(value, fallback) {
-    return LEGACY_LANGUAGE_VALUES[value] ?? value ?? fallback;
-}
-
-function save() {
-    context().saveSettingsDebounced?.();
-}
-
-function log(...args) {
-    if (settings().debug) console.debug('[Inline Assistant]', ...args);
-}
-
 async function loadSettingsHtml() {
     const response = await fetch('/scripts/extensions/third-party/SillyTavern-Inline-Assistant/settings.html');
     return response.text();
-}
-
-function selectOption(select, value) {
-    const normalized = normalizeLanguageValue(value, value);
-    select.value = normalized;
-    if (select.value !== normalized && select.options.length > 0) select.selectedIndex = 0;
-}
-
-function fillLanguageSelect(select, allowAuto) {
-    select.innerHTML = '';
-    const options = getLanguageOptions(allowAuto);
-    for (const [value, label] of options) {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = label;
-        select.append(option);
-    }
-}
-
-function getLanguageOptions(allowAuto) {
-    const stTarget = document.getElementById('translation_target_language');
-    const options = [];
-    if (allowAuto) options.push(['auto', 'Auto detect']);
-
-    if (stTarget instanceof HTMLSelectElement && stTarget.options.length > 0) {
-        for (const option of stTarget.options) {
-            if (!option.value) continue;
-            const label = option.textContent?.trim() || option.value;
-            options.push([option.value, label]);
-        }
-        return options;
-    }
-
-    for (const [value, label] of FALLBACK_LANGUAGE_OPTIONS) {
-        if (!allowAuto && value === 'auto') continue;
-        options.push([value, label]);
-    }
-    return options;
 }
 
 function bindInput(id, key, type = 'value') {
@@ -508,18 +382,6 @@ function syncPreviewControls() {
     if (target) selectOption(target, s.targetLanguage);
     if (source) compactSelectedLanguageLabel(source);
     if (target) compactSelectedLanguageLabel(target);
-}
-
-function compactSelectedLanguageLabel(select) {
-    if (!(select instanceof HTMLSelectElement)) return;
-    for (const option of select.options) {
-        if (!option.dataset.fullLabel) option.dataset.fullLabel = option.textContent || option.value;
-        option.textContent = option.dataset.fullLabel;
-    }
-    const selected = select.selectedOptions[0];
-    if (selected && selected.value !== 'auto') {
-        selected.textContent = selected.value;
-    }
 }
 
 function renderTranslation(pending = false) {

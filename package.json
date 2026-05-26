@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "check": "tsc --noEmit",
-    "build": "tsc --outDir dist && cp dist/index.js index.js"
+    "build": "esbuild src/index.ts --bundle --format=iife --target=es2022 --external:/scripts/extensions/shared.js --external:/scripts/extensions/translate/index.js --outfile=index.js"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/IceFog72/SillyTavern-Inline-Assistant#readme",
   "devDependencies": {
+    "esbuild": "^0.28.0",
     "typescript": "^6.0.3"
   }
 }

@@ -2,7 +2,7 @@
 
 ## Code/design issues
 
-- `src/index.ts` is still a single large runtime module. Split into settings, ST API, textarea controller, ghost overlay, completion, and translation modules before adding more features.
+- `src/index.ts` is smaller, but still owns most runtime orchestration. Next split targets: ST API, textarea controller, ghost overlay, completion, and translation modules.
 - TypeScript strictness is reduced in `tsconfig.json` because SillyTavern runtime APIs lack local type packages and current code stores extension settings as open records. Add stronger domain types next.
 - Dynamic imports point at SillyTavern absolute browser paths. TypeScript can check shape through ambient declarations, but runtime compatibility depends on current SillyTavern internals.
 - Completion request payload hardcodes provider-specific custom body fragments for thinking suppression. Some providers may ignore or reject them.
@@ -18,4 +18,3 @@
 
 - No automated browser/ST integration tests exist.
 - Build output (`index.js`) must be regenerated after source edits with `npm run build`.
-- `dist/` is generated output; decide whether repository should track it or ignore it.

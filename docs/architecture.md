@@ -28,9 +28,11 @@ SillyTavern Inline Assistant extends SillyTavern's send box with two helpers:
 ## Source layout
 
 ```text
-src/index.ts          TypeScript source of extension runtime
-dist/index.js         build output copy staging
-index.js              SillyTavern-loaded JavaScript artifact
+src/index.ts          runtime orchestrator
+src/constants.ts      ids, defaults, fallback language data
+src/languages.ts      language select helpers and label normalization
+src/settings-store.ts SillyTavern context/settings facade
+index.js              bundled SillyTavern-loaded JavaScript artifact
 settings.html         injected extension settings panel
 style.css             runtime/settings styles
 docs/architecture.md  system notes
@@ -40,4 +42,4 @@ docs/problems.md      known code/design issues found during rewrite
 
 ## Build model
 
-SillyTavern still loads root `index.js`. TypeScript source lives in `src/index.ts`; `npm run build` compiles to `dist/index.js` and copies to root `index.js`.
+SillyTavern still loads root `index.js`. TypeScript source lives under `src/`; `npm run build` bundles modules with esbuild into root `index.js`.
