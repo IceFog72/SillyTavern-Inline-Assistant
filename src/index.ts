@@ -307,31 +307,40 @@ function normalizeRuntimePlacement() {
     let previewToggle = document.getElementById(PREVIEW_TOGGLE_ID);
     let autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
 
-    if (settings().enabled) {
-        if (!(previewToggle instanceof HTMLElement)) {
-            previewToggle = createPreviewToggle();
-        }
-        if (!(autocompleteButton instanceof HTMLElement)) {
-            autocompleteButton = createAutocompleteButton();
-        }
-
+    const s = settings();
+    if (s.enabled) {
         const leftSendForm = document.getElementById('leftSendForm');
         const rightSendForm = document.getElementById('rightSendForm');
 
-        if (leftSendForm) {
-            if (previewToggle.parentElement !== leftSendForm) leftSendForm.append(previewToggle);
-            if (sourceSelect.parentElement !== leftSendForm) leftSendForm.append(sourceSelect);
+        if (s.translationEnabled) {
+            if (!(previewToggle instanceof HTMLElement)) {
+                previewToggle = createPreviewToggle();
+            }
+            if (leftSendForm) {
+                if (previewToggle.parentElement !== leftSendForm) leftSendForm.append(previewToggle);
+                if (sourceSelect.parentElement !== leftSendForm) leftSendForm.append(sourceSelect);
+            } else {
+                if (previewToggle.parentElement !== wrapper || previewToggle !== wrapper.firstElementChild) wrapper.prepend(previewToggle);
+                if (sourceSelect.parentElement !== wrapper || sourceSelect.nextElementSibling !== textarea) wrapper.insertBefore(sourceSelect, textarea);
+            }
         } else {
-            if (previewToggle.parentElement !== wrapper || previewToggle !== wrapper.firstElementChild) wrapper.prepend(previewToggle);
-            if (sourceSelect.parentElement !== wrapper || sourceSelect.nextElementSibling !== textarea) wrapper.insertBefore(sourceSelect, textarea);
+            previewToggle?.remove();
+            sourceSelect.remove();
         }
 
-        if (rightSendForm) {
-            if (autocompleteButton.parentElement !== rightSendForm) rightSendForm.prepend(autocompleteButton);
-        } else if (autocompleteButton.parentElement !== wrapper || autocompleteButton.previousElementSibling !== textarea) {
-            textarea.insertAdjacentElement('afterend', autocompleteButton);
+        if (s.inlineEnabled) {
+            if (!(autocompleteButton instanceof HTMLElement)) {
+                autocompleteButton = createAutocompleteButton();
+            }
+            if (rightSendForm) {
+                if (autocompleteButton.parentElement !== rightSendForm) rightSendForm.prepend(autocompleteButton);
+            } else if (autocompleteButton.parentElement !== wrapper || autocompleteButton.previousElementSibling !== textarea) {
+                textarea.insertAdjacentElement('afterend', autocompleteButton);
+            }
+            autocompleteButton.hidden = !s.manualAutocomplete;
+        } else {
+            autocompleteButton?.remove();
         }
-        autocompleteButton.hidden = !modeAllows('inline') || !settings().manualAutocomplete;
     } else {
         previewToggle?.remove();
         autocompleteButton?.remove();
@@ -379,7 +388,8 @@ function renderRuntime() {
         ghost.hidden = true;
         return;
     }
-    if (!document.getElementById(PREVIEW_TOGGLE_ID) || !document.getElementById(AUTOCOMPLETE_BUTTON_ID) || !document.getElementById(SOURCE_SELECT_ID)) {
+    if ((s.translationEnabled && (!document.getElementById(PREVIEW_TOGGLE_ID) || !document.getElementById(SOURCE_SELECT_ID)))
+        || (s.inlineEnabled && !document.getElementById(AUTOCOMPLETE_BUTTON_ID))) {
         normalizeRuntimePlacement();
     }
     const previewHidden = !modeAllows('translate') || !s.previewVisible;
@@ -387,9 +397,17 @@ function renderRuntime() {
     const source = document.getElementById(SOURCE_SELECT_ID);
     if (source) source.hidden = previewHidden;
     const previewToggle = document.getElementById(PREVIEW_TOGGLE_ID);
-    if (previewToggle) previewToggle.hidden = !s.translationEnabled;
+    if (s.translationEnabled) {
+        if (previewToggle) previewToggle.hidden = false;
+    } else {
+        previewToggle?.remove();
+    }
     const autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
-    if (autocompleteButton) autocompleteButton.hidden = !modeAllows('inline') || !s.manualAutocomplete;
+    if (s.inlineEnabled) {
+        if (autocompleteButton) autocompleteButton.hidden = !s.manualAutocomplete;
+    } else {
+        autocompleteButton?.remove();
+    }
     ghost.hidden = !modeAllows('inline') || !completion;
     syncPreviewControls();
     renderTranslation();
