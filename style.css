@@ -159,6 +159,22 @@
     color: rgba(180, 180, 180, 0.55);
 }
 
+.inline-assistant-ghost-pending .inline-assistant-ghost-suggestion {
+    animation: inline-assistant-ghost-pulse 1s ease-in-out infinite;
+    letter-spacing: 1px;
+}
+
+@keyframes inline-assistant-ghost-pulse {
+    0%,
+    100% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 0.9;
+    }
+}
+
 #send_textarea.inline-assistant-bound {
     position: relative;
     z-index: 2;

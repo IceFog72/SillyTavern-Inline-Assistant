@@ -35,4 +35,8 @@ interface Window {
   toastr?: Toastr;
 }
 
+declare global {
+  var translate: ((input: string, targetLanguage: string, provider?: string | null) => Promise<string>) | undefined;
+}
+
 declare var toastr: Toastr | undefined;

@@ -32,7 +32,7 @@ src/index.ts          runtime orchestrator
 src/constants.ts      ids, defaults, fallback language data
 src/languages.ts      language select helpers and label normalization
 src/settings-store.ts SillyTavern context/settings facade
-index.js              bundled SillyTavern-loaded JavaScript artifact
+index.js              bundled SillyTavern-loaded JavaScript artifact 
 settings.html         injected extension settings panel
 style.css             runtime/settings styles
 docs/architecture.md  system notes

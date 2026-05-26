@@ -10,6 +10,8 @@ let ghost = null;
 let observer = null;
 let debounceTimer = null;
 let completion = '';
+let completionPending = false;
+let completionRequestKey = null;
 let translationText = '';
 let lastInput = '';
 let requestId = 0;
@@ -299,7 +301,7 @@ function normalizeRuntimePlacement() {
     normalizingDom = true;
 
     const existingPreview = document.getElementById(PREVIEW_ID);
-    const previewSelectCount = existingPreview?.querySelectorAll('.inline-assistant-preview-row > select').length ?? 0;
+    const previewSelectCount = existingPreview?.querySelectorAll('.inline-assistant-preview-row .inline-assistant-language-select').length ?? 0;
     if (!existingPreview || previewSelectCount !== 1) {
         existingPreview?.remove();
         preview = createPreview();
@@ -470,8 +472,9 @@ function renderGhost() {
     }
     const cursor = textarea.selectionStart;
     ghost.querySelector('.inline-assistant-ghost-prefix').textContent = textarea.value.slice(0, cursor);
-    ghost.querySelector('.inline-assistant-ghost-suggestion').textContent = completion;
-    ghost.hidden = !modeAllows('inline') || !completion;
+    ghost.classList.toggle('inline-assistant-ghost-pending', completionPending);
+    ghost.querySelector('.inline-assistant-ghost-suggestion').textContent = completionPending ? '...' : completion;
+    ghost.hidden = !modeAllows('inline') || (!completion && !completionPending);
 }
 
 function syncGhost() {
@@ -480,6 +483,8 @@ function syncGhost() {
 
 function onInput() {
     completion = '';
+    completionPending = false;
+    completionRequestKey = null;
     scheduleWork('input');
     renderRuntime();
 }
@@ -490,12 +495,16 @@ function onKeyDown(event) {
         event.preventDefault();
         insertAtCursor(completion);
         completion = '';
+        completionPending = false;
+        completionRequestKey = null;
         scheduleWork('accept');
         renderRuntime();
     }
     if (event.key === s.dismissKey && completion) {
         event.preventDefault();
         completion = '';
+        completionPending = false;
+        completionRequestKey = null;
         renderRuntime();
     }
 }
@@ -517,6 +526,8 @@ function scheduleWork(reason) {
     lastInput = value;
     if (!s.enabled || value.trim().length < s.minChars) {
         completion = '';
+        completionPending = false;
+        completionRequestKey = null;
         translationText = '';
         renderRuntime();
         return;
@@ -537,6 +548,8 @@ function shouldTrigger(value, previous, reason) {
 function triggerAutocomplete() {
     if (!textarea) return;
     completion = '';
+    completionPending = false;
+    completionRequestKey = null;
     runCompletion(textarea.value);
 }
 
@@ -568,16 +581,28 @@ function runCompletion(input, expectedRequestId = ++requestId) {
     if (!modeAllows('inline')) return;
     if (!shouldRunCompletion(input)) {
         completion = '';
+        completionPending = false;
+        completionRequestKey = null;
         renderGhost();
         return;
     }
+    const requestKey = input;
+    if (completionPending && completionRequestKey === requestKey) return;
+    completion = '';
+    completionPending = true;
+    completionRequestKey = requestKey;
+    renderGhost();
     generateCompletion(input).then((result) => {
         if (expectedRequestId !== requestId) return;
+        completionPending = false;
+        completionRequestKey = null;
         completion = result;
         renderGhost();
     }).catch((error) => {
         if (expectedRequestId !== requestId) return;
         console.error('[Inline Assistant] Completion failed', error);
+        completionPending = false;
+        completionRequestKey = null;
         completion = '';
         renderGhost();
     });
@@ -625,12 +650,12 @@ function renderCompletionPrompt(input) {
 }
 
 function buildCompletionMessages(instruction, draft, s) {
-    const messages = [{ role: 'system', content: `${instruction}\n\nPredict the user's next typed text. The recent chat roles are intentionally inverted so the active draft can be completed as a user-style message.` }];
-    messages.push(...getLastChatMessages(s.lastMessagesCount));
-    if (messages.at(-1)?.role !== 'user') {
-        messages.push({ role: 'user', content: '' });
+    const promptIncludesDraft = String(s.completionPrompt || '').includes('{{input}}');
+    const messages = getLastChatMessages(s.lastMessagesCount);
+    messages.push({ role: 'user', content: instruction });
+    if (!promptIncludesDraft) {
+        messages.push({ role: 'assistant', content: draft });
     }
-    messages.push({ role: 'assistant', content: draft });
     return messages;
 }
 
@@ -703,11 +728,19 @@ function removeThinkingBlocks(text) {
 
 async function translateWithSillyTavern(input, targetLanguage) {
     translateModulePromise ??= import('/scripts/extensions/translate/index.js' as string);
-    const module = await translateModulePromise;
-    if (typeof module.translate !== 'function') {
-        throw new Error('SillyTavern translate extension did not export translate()');
+    const module = await translateModulePromise.catch((error) => {
+        if (typeof globalThis.translate !== 'function') throw error;
+        return null;
+    });
+    const translate = typeof module?.translate === 'function' ? module.translate : globalThis.translate;
+    if (typeof translate !== 'function') {
+        throw new Error('SillyTavern translate extension is not available');
     }
-    return module.translate(input, targetLanguage);
+    const result = await translate(input, targetLanguage);
+    if (typeof result !== 'string') {
+        throw new Error('SillyTavern translation provider returned no text');
+    }
+    return result;
 }
 
 function getLanguageLabel(value) {

@@ -42,7 +42,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     minChars: 3,
     debug: false,
     autocompleteProfile: 'current',
-    completionPrompt: 'Continue the draft response on user message. Return only the continuation text, no quotes, no explanation.\n\nCurrent draft:\n{{input}}',
+    completionPrompt: 'Continue message draft. Return only the continuation text, no quotes, no explanation.\n\nCurrent draft:\n{{input}}',
     maxCompletionLength: 80,
     temperature: 0.3,
     lastMessagesCount: 3,
