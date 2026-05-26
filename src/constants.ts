@@ -36,7 +36,7 @@ export const LEGACY_LANGUAGE_VALUES = Object.freeze({
 
 export const DEFAULT_SETTINGS = Object.freeze({
     enabled: true,
-    inlineEnabled: true,
+    inlineEnabled: false,
     translationEnabled: true,
     debounceMs: 500,
     minChars: 3,

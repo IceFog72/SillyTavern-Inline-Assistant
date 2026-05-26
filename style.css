@@ -21,6 +21,12 @@
     gap: 8px;
 }
 
+.inline-assistant-caution {
+    opacity: 0.8;
+    margin-top: -6px;
+    line-height: 1.3;
+}
+
 .inline-assistant-label-row {
     display: flex;
     align-items: center;

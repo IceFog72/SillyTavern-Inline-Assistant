@@ -6,6 +6,7 @@
 - Migrates legacy `mode` setting into `inlineEnabled` and `translationEnabled`.
 - Global Enabled switch now hides extension runtime buttons through feature gating.
 - Changed Swap text action into language-only swap beside target language selector.
+- Inline completion now defaults off and shows token-use caution recommending local/cheap LLM profiles.
 
 ## 0.1.0 TypeScript rewrite
 
