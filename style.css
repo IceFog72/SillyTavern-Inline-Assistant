@@ -136,6 +136,7 @@
 }
 
 #inline_assistant_source_language {
+    margin: 2px !important;
     order: 4;
 }
 
@@ -171,6 +172,7 @@
 }
 
 @keyframes inline-assistant-ghost-pulse {
+
     0%,
     100% {
         opacity: 0.35;
@@ -212,10 +214,6 @@
         grid-column: 2;
     }
 
-    #inline_assistant_source_language {
-        margin: 2px !important;
-    }
-
 }
 
 /* ── Input History ────────────────────────────────────────────────────────── */
@@ -231,18 +229,22 @@
     opacity: 0.5;
     transition: 200ms;
 }
+
 .stih--buttons .stih--button:hover {
     opacity: 1;
     background-color: var(--white30a);
 }
+
 .stih--buttons .stih--arrows {
     display: flex;
     flex-direction: column;
     order: 2;
 }
+
 #ia-ih--btn-history {
     order: 1;
 }
+
 .stih--buttons .stih--arrows .stih--button {
     padding-top: 0;
     padding-bottom: 0;
@@ -271,9 +273,11 @@
     scale: 1 0;
     font-size: 0.5em;
 }
+
 .stih--history.stih--active {
     scale: 1;
 }
+
 .stih--history .stih--item {
     padding: 0.25em 1em 0.25em 0.25em;
     opacity: 0.5;
@@ -285,41 +289,49 @@
     align-items: baseline;
     transform: translateX(0);
 }
+
 .stih--history .stih--item:hover,
 .stih--history .stih--item.stih--chat:not(.stih--current):hover,
 .stih--history .stih--item:has([contenteditable]) {
     opacity: 1;
     background-color: rgba(255, 255, 255, 0.0625);
 }
+
 .stih--history .stih--item.stih--current {
     font-weight: bold;
 }
+
 .stih--history .stih--item.stih--remove {
     transform: translateX(150%);
 }
+
 .stih--history .stih--item .stih--icon {
     flex: 0 0 auto;
     width: 1.25em;
     text-align: center;
 }
+
 .stih--history .stih--item .stih--label {
     flex: 1 1 auto;
 }
+
 .stih--history .stih--item .stih--title {
     font-size: 0.75em;
     color: color-mix(in srgb, var(--SmartThemeBodyColor) 50%, transparent 50%);
     white-space: pre-wrap;
     tab-size: 2;
 }
+
 .stih--history .stih--item .stih--title.stih--code {
     font-family: var(--monoFontFamily);
 }
+
 .stih--history .stih--item .stih--title::first-line {
     font-size: calc(0.9em / 0.75);
     color: var(--SmartThemeBodyColor);
 }
 
-html > body #nonQRFormItems .stih--hidden,
+html>body #nonQRFormItems .stih--hidden,
 .stih--hidden {
     display: none !important;
 }
