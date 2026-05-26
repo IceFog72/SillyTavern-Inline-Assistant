@@ -471,7 +471,7 @@
         previewToggle?.remove();
         sourceSelect.remove();
       }
-      if (s.inlineEnabled) {
+      if (s.inlineEnabled && s.manualAutocomplete) {
         if (!(autocompleteButton instanceof HTMLElement)) {
           autocompleteButton = createAutocompleteButton();
         }
@@ -480,7 +480,6 @@
         } else if (autocompleteButton.parentElement !== wrapper || autocompleteButton.previousElementSibling !== textarea) {
           textarea.insertAdjacentElement("afterend", autocompleteButton);
         }
-        autocompleteButton.hidden = !s.manualAutocomplete;
       } else {
         autocompleteButton?.remove();
       }
@@ -525,7 +524,7 @@
       ghost.hidden = true;
       return;
     }
-    if (s.translationEnabled && (!document.getElementById(PREVIEW_TOGGLE_ID) || !document.getElementById(SOURCE_SELECT_ID)) || s.inlineEnabled && !document.getElementById(AUTOCOMPLETE_BUTTON_ID)) {
+    if (s.translationEnabled && (!document.getElementById(PREVIEW_TOGGLE_ID) || !document.getElementById(SOURCE_SELECT_ID)) || s.inlineEnabled && s.manualAutocomplete && !document.getElementById(AUTOCOMPLETE_BUTTON_ID)) {
       normalizeRuntimePlacement();
     }
     const previewHidden = !modeAllows("translate") || !s.previewVisible;
@@ -539,8 +538,8 @@
       previewToggle?.remove();
     }
     const autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
-    if (s.inlineEnabled) {
-      if (autocompleteButton) autocompleteButton.hidden = !s.manualAutocomplete;
+    if (s.inlineEnabled && s.manualAutocomplete) {
+      if (!autocompleteButton) normalizeRuntimePlacement();
     } else {
       autocompleteButton?.remove();
     }
