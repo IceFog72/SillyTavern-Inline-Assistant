@@ -305,31 +305,38 @@ function normalizeRuntimePlacement() {
     wrapper.classList.add('inline-assistant-textarea-wrap', 'inline-assistant-editor-cell');
 
     let previewToggle = document.getElementById(PREVIEW_TOGGLE_ID);
-    if (!(previewToggle instanceof HTMLElement)) {
-        previewToggle = createPreviewToggle();
-    }
     let autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
-    if (!(autocompleteButton instanceof HTMLElement)) {
-        autocompleteButton = createAutocompleteButton();
-    }
 
-    const leftSendForm = document.getElementById('leftSendForm');
-    const rightSendForm = document.getElementById('rightSendForm');
+    if (settings().enabled) {
+        if (!(previewToggle instanceof HTMLElement)) {
+            previewToggle = createPreviewToggle();
+        }
+        if (!(autocompleteButton instanceof HTMLElement)) {
+            autocompleteButton = createAutocompleteButton();
+        }
 
-    if (leftSendForm) {
-        if (previewToggle.parentElement !== leftSendForm) leftSendForm.append(previewToggle);
-        if (sourceSelect.parentElement !== leftSendForm) leftSendForm.append(sourceSelect);
+        const leftSendForm = document.getElementById('leftSendForm');
+        const rightSendForm = document.getElementById('rightSendForm');
+
+        if (leftSendForm) {
+            if (previewToggle.parentElement !== leftSendForm) leftSendForm.append(previewToggle);
+            if (sourceSelect.parentElement !== leftSendForm) leftSendForm.append(sourceSelect);
+        } else {
+            if (previewToggle.parentElement !== wrapper || previewToggle !== wrapper.firstElementChild) wrapper.prepend(previewToggle);
+            if (sourceSelect.parentElement !== wrapper || sourceSelect.nextElementSibling !== textarea) wrapper.insertBefore(sourceSelect, textarea);
+        }
+
+        if (rightSendForm) {
+            if (autocompleteButton.parentElement !== rightSendForm) rightSendForm.prepend(autocompleteButton);
+        } else if (autocompleteButton.parentElement !== wrapper || autocompleteButton.previousElementSibling !== textarea) {
+            textarea.insertAdjacentElement('afterend', autocompleteButton);
+        }
+        autocompleteButton.hidden = !modeAllows('inline') || !settings().manualAutocomplete;
     } else {
-        if (previewToggle.parentElement !== wrapper || previewToggle !== wrapper.firstElementChild) wrapper.prepend(previewToggle);
-        if (sourceSelect.parentElement !== wrapper || sourceSelect.nextElementSibling !== textarea) wrapper.insertBefore(sourceSelect, textarea);
+        previewToggle?.remove();
+        autocompleteButton?.remove();
+        sourceSelect.remove();
     }
-
-    if (rightSendForm) {
-        if (autocompleteButton.parentElement !== rightSendForm) rightSendForm.prepend(autocompleteButton);
-    } else if (autocompleteButton.parentElement !== wrapper || autocompleteButton.previousElementSibling !== textarea) {
-        textarea.insertAdjacentElement('afterend', autocompleteButton);
-    }
-    autocompleteButton.hidden = !modeAllows('inline') || !settings().manualAutocomplete;
 
     ghost = document.getElementById(GHOST_ID) ?? createGhost();
     if (ghost.parentElement !== wrapper || ghost.nextElementSibling !== textarea) {
