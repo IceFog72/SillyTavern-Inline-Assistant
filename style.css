@@ -133,6 +133,8 @@
 .inline-assistant-ghost-content {
     white-space: pre-wrap;
     overflow-wrap: break-word;
+    box-sizing: border-box;
+    transform-origin: left top;
 }
 
 .inline-assistant-ghost-prefix {

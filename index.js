@@ -507,11 +507,21 @@
     ghost.style.width = `${textarea.offsetWidth}px`;
     ghost.style.height = `${textarea.offsetHeight}px`;
     ghost.style.padding = textareaStyle.padding;
+    ghost.style.border = textareaStyle.border;
+    ghost.style.borderColor = "transparent";
     ghost.style.font = textareaStyle.font;
     ghost.style.lineHeight = textareaStyle.lineHeight;
     ghost.style.letterSpacing = textareaStyle.letterSpacing;
-    ghost.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
-    ghost.querySelector(".inline-assistant-ghost-prefix").textContent = textarea.value.slice(0, textarea.selectionStart);
+    ghost.style.textAlign = textareaStyle.textAlign;
+    ghost.style.tabSize = textareaStyle.tabSize;
+    const content = ghost.querySelector(".inline-assistant-ghost-content");
+    if (content instanceof HTMLElement) {
+      content.style.transform = `translate(${-textarea.scrollLeft}px, ${-textarea.scrollTop}px)`;
+      content.style.width = `${textarea.scrollWidth}px`;
+      content.style.minHeight = `${textarea.scrollHeight}px`;
+    }
+    const cursor = textarea.selectionStart;
+    ghost.querySelector(".inline-assistant-ghost-prefix").textContent = textarea.value.slice(0, cursor);
     ghost.querySelector(".inline-assistant-ghost-suggestion").textContent = completion;
     ghost.hidden = !modeAllows("inline") || !completion;
   }
@@ -588,7 +598,7 @@
       }).catch((error) => {
         if (id !== requestId) return;
         console.error("[Inline Assistant] Translation failed", error);
-        translationText = fakeTranslation(input);
+        translationText = "";
         renderTranslation(false);
       });
     }
@@ -622,7 +632,7 @@
       return translateWithSillyTavern(input, s.targetLanguage);
     }
     const profileId = resolveProfileId(s.translationProfile === "autocomplete-profile" ? s.autocompleteProfile : s.translationProfile);
-    if (!profileId) return fakeTranslation(input);
+    if (!profileId) throw new Error("No Connection Manager profile selected for translation");
     const prompt = s.translationPrompt.replaceAll("{{input}}", input).replaceAll("{{sourceLanguage}}", getLanguageLabel(s.sourceLanguage)).replaceAll("{{targetLanguage}}", getLanguageLabel(s.targetLanguage));
     return generateWithConnectionProfile(profileId, [{ role: "user", content: prompt }], s.maxCompletionLength * 2);
   }
@@ -643,7 +653,9 @@
     return String(s.completionPrompt || "{{input}}").replaceAll("{{input}}", input).replaceAll("{{user}}", context().name1 ?? "User").replaceAll("{{char}}", context().name2 ?? "Assistant");
   }
   function buildCompletionMessages(instruction, draft, s) {
-    const messages = [{ role: "system", content: instruction }];
+    const messages = [{ role: "system", content: `${instruction}
+
+Predict the user's next typed text. The recent chat roles are intentionally inverted so the active draft can be completed as a user-style message.` }];
     messages.push(...getLastChatMessages(s.lastMessagesCount));
     if (messages.at(-1)?.role !== "user") {
       messages.push({ role: "user", content: "" });
@@ -666,6 +678,7 @@
     return profileSetting;
   }
   async function generateWithConnectionProfile(profileId, messages, maxTokens, overridePayload = {}) {
+    const s = settings();
     const service = await getConnectionManagerService();
     const response = await service.sendRequest(profileId, messages, maxTokens, {
       extractData: true,
@@ -673,6 +686,7 @@
       includeInstruct: true,
       stream: false
     }, {
+      temperature: Number(s.temperature),
       ...overridePayload,
       custom_prompt_post_processing: "none",
       custom_include_body: "chat_template_kwargs:\n  enable_thinking: false\n  preserve_thinking: false"
@@ -710,29 +724,9 @@
     }
     return module.translate(input, targetLanguage);
   }
-  function fakeTranslation(input) {
-    const target = getLanguageLabel(settings().targetLanguage);
-    const cleanInput = stripFakeTranslationPrefixes(input).trimStart();
-    return `[${target}] ${cleanInput}`;
-  }
   function getLanguageLabel(value) {
     const normalized = normalizeLanguageValue(value, value);
     return getLanguageOptions(true).find(([id]) => id === normalized)?.[1] ?? normalized;
-  }
-  function stripFakeTranslationPrefixes(input) {
-    let output = input;
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const [, label] of getLanguageOptions(true)) {
-        const prefix = `[${label}]`;
-        if (output.startsWith(prefix)) {
-          output = output.slice(prefix.length).trimStart();
-          changed = true;
-        }
-      }
-    }
-    return output;
   }
   function togglePreview() {
     const s = settings();
