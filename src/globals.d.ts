@@ -40,3 +40,11 @@ declare global {
 }
 
 declare var toastr: Toastr | undefined;
+
+// SillyTavern event system (used by InputHistory sub-module)
+declare const eventSource: {
+    on(event: string, callback: (...args: unknown[]) => void): void;
+    emit(event: string, ...args: unknown[]): void;
+} | undefined;
+
+declare const event_types: Record<string, string> | undefined;

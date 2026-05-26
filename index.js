@@ -173,6 +173,358 @@
     if (settings().debug) console.debug("[Inline Assistant]", ...args);
   }
 
+  // src/input-history/constants.ts
+  var MODULE_NAME2 = "inputHistory";
+  var STORAGE_KEY = "st--inputHistory";
+  var IH_BUTTON_WRAP_ID = "ia-ih--buttons";
+  var IH_ARROWS_WRAP_ID = "ia-ih--arrows";
+  var IH_BTN_PREV_ID = "ia-ih--btn-prev";
+  var IH_BTN_NEXT_ID = "ia-ih--btn-next";
+  var IH_BTN_HISTORY_ID = "ia-ih--btn-history";
+  var IH_HISTORY_MENU_ID = "ia-ih--history-menu";
+
+  // src/input-history/settings.ts
+  var DEFAULT_IH_SETTINGS = Object.freeze({
+    maxHistory: 10,
+    showButtons: true,
+    showArrowButtons: true,
+    showHistoryButton: true
+  });
+  function ihSettings() {
+    const ctx = SillyTavern.getContext();
+    const ext = ctx.extensionSettings;
+    if (!ext[MODULE_NAME2]) {
+      ext[MODULE_NAME2] = { ...DEFAULT_IH_SETTINGS };
+    }
+    const current = ext[MODULE_NAME2];
+    for (const [key, value] of Object.entries(DEFAULT_IH_SETTINGS)) {
+      if (current[key] === void 0) current[key] = value;
+    }
+    return current;
+  }
+  function ihSave() {
+    SillyTavern.getContext().saveSettingsDebounced?.();
+  }
+
+  // src/input-history/store.ts
+  var inputHistoryIdx = -1;
+  function getInputHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    } catch {
+      return [];
+    }
+  }
+  function setInputHistory(history) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  }
+  function addToInputHistory(text) {
+    const trimmed = text?.trim() ?? "";
+    if (!trimmed) return;
+    const history = getInputHistory();
+    if (history[0] !== trimmed) {
+      history.unshift(trimmed);
+      const { maxHistory } = ihSettings();
+      while (history.length > maxHistory) history.pop();
+      setInputHistory(history);
+    }
+    inputHistoryIdx = -1;
+  }
+  function inputHistoryBack(ta) {
+    const history = getInputHistory();
+    if (inputHistoryIdx + 1 < history.length) inputHistoryIdx++;
+    ta.value = history[inputHistoryIdx] ?? "";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function inputHistoryForward(ta) {
+    const history = getInputHistory();
+    if (inputHistoryIdx >= 0) inputHistoryIdx--;
+    ta.value = history.length === 0 || inputHistoryIdx < 0 ? "" : history[inputHistoryIdx] ?? "";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  // src/input-history/menu.ts
+  var ANIMATION_MS = 410;
+  function waitForFrame() {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+  async function hideHistoryMenu() {
+    const menu = document.getElementById(IH_HISTORY_MENU_ID);
+    const trigger = document.getElementById(IH_BTN_HISTORY_ID);
+    if (!menu) return;
+    menu.classList.remove("stih--active");
+    trigger?.classList.remove("stih--hasMenu");
+    await new Promise((resolve) => setTimeout(resolve, ANIMATION_MS));
+    menu.remove();
+  }
+  async function showHistoryMenu(ta) {
+    const existing = document.getElementById(IH_HISTORY_MENU_ID);
+    if (existing) {
+      await hideHistoryMenu();
+      return;
+    }
+    const trigger = document.getElementById(IH_BTN_HISTORY_ID);
+    trigger?.classList.add("stih--hasMenu");
+    const menu = document.createElement("div");
+    menu.id = IH_HISTORY_MENU_ID;
+    menu.classList.add("stih--history");
+    const renderItem = (text) => {
+      const item = document.createElement("div");
+      item.classList.add("stih--item");
+      item.title = text;
+      const icon = document.createElement("div");
+      icon.classList.add("stih--icon", "fa-solid", "fa-comment");
+      item.append(icon);
+      const label = document.createElement("div");
+      label.classList.add("stih--label");
+      const content = document.createElement("div");
+      content.classList.add("stih--content");
+      const title = document.createElement("div");
+      title.classList.add("stih--title");
+      if (text[0] === "/") title.classList.add("stih--code");
+      title.textContent = text;
+      content.append(title);
+      label.append(content);
+      item.append(label);
+      item.addEventListener("click", async () => {
+        await hideHistoryMenu();
+        ta.value = text;
+        ta.focus();
+      });
+      menu.append(item);
+    };
+    for (const entry of getInputHistory()) renderItem(entry);
+    const container = document.querySelector("#nonQRFormItems");
+    await waitForFrame();
+    (container ?? document.body).append(menu);
+    await waitForFrame();
+    menu.classList.add("stih--active");
+  }
+  function filterHistoryMenu(filterText) {
+    const menu = document.getElementById(IH_HISTORY_MENU_ID);
+    if (!menu) return;
+    const history = getInputHistory();
+    const terms = filterText.trim().split(/\s+/).filter(Boolean);
+    history.forEach((entry, idx) => {
+      const item = menu.children[idx];
+      if (!item) return;
+      const matches = terms.length === 0 || terms.every((t) => entry.toLowerCase().includes(t.toLowerCase()));
+      item.classList.toggle("stih--hidden", !matches);
+    });
+  }
+
+  // src/input-history/buttons.ts
+  function makeIHButton(id, classes, title) {
+    const btn = document.createElement("div");
+    btn.id = id;
+    btn.classList.add("stih--button", "menu_button", ...classes);
+    btn.title = title;
+    return btn;
+  }
+  function createButtons(ta) {
+    const wrap = document.createElement("div");
+    wrap.id = IH_BUTTON_WRAP_ID;
+    wrap.classList.add("stih--buttons");
+    const arrows = document.createElement("div");
+    arrows.id = IH_ARROWS_WRAP_ID;
+    arrows.classList.add("stih--arrows");
+    const prev = makeIHButton(IH_BTN_PREV_ID, ["fa-solid", "fa-chevron-up"], "Previous input");
+    prev.addEventListener("click", () => inputHistoryBack(ta));
+    arrows.append(prev);
+    const next = makeIHButton(IH_BTN_NEXT_ID, ["fa-solid", "fa-chevron-down"], "Next input");
+    next.addEventListener("click", () => inputHistoryForward(ta));
+    arrows.append(next);
+    wrap.append(arrows);
+    const historyBtn = makeIHButton(IH_BTN_HISTORY_ID, ["stih--menuTrigger", "fa-solid", "fa-clock-rotate-left"], "Input History");
+    historyBtn.addEventListener("click", () => {
+      showHistoryMenu(ta);
+      ta.focus();
+    });
+    wrap.append(historyBtn);
+    return wrap;
+  }
+  function placeButtons(ta) {
+    let wrap = document.getElementById(IH_BUTTON_WRAP_ID);
+    if (!wrap) wrap = createButtons(ta);
+    const editorCell = document.getElementById(EDITOR_CELL_ID);
+    const anchor = editorCell ?? ta;
+    if (wrap.previousElementSibling !== anchor) {
+      anchor.insertAdjacentElement("afterend", wrap);
+    }
+  }
+  function updateButtonVisibility() {
+    const s = ihSettings();
+    const wrap = document.getElementById(IH_BUTTON_WRAP_ID);
+    const arrows = document.getElementById(IH_ARROWS_WRAP_ID);
+    const historyBtn = document.getElementById(IH_BTN_HISTORY_ID);
+    if (!wrap) return;
+    wrap.classList.toggle("stih--hidden", !s.showButtons);
+    arrows?.classList.toggle("stih--hidden", !s.showArrowButtons);
+    if (historyBtn) {
+      historyBtn.classList.toggle("stih--hidden", !s.showHistoryButton);
+      if (!s.showHistoryButton) hideHistoryMenu();
+    }
+  }
+
+  // src/input-history/slash-commands.ts
+  var SETTING_TYPES = {
+    maxHistory: (v) => Number(v),
+    showButtons: isTrueBoolean,
+    showArrowButtons: isTrueBoolean,
+    showHistoryButton: isTrueBoolean
+  };
+  function isTrueBoolean(v) {
+    return v?.toLowerCase?.() === "true";
+  }
+  function toastrError(msg) {
+    globalThis.toastr?.error?.(msg);
+  }
+  function toastrInfo(msg) {
+    globalThis.toastr?.info?.(msg);
+  }
+  function registerSlashCommands() {
+    const SlashCommandParserMod = globalThis.SlashCommandParser;
+    const SlashCommandMod = globalThis.SlashCommand;
+    const SlashCommandNamedArgumentMod = globalThis.SlashCommandNamedArgument;
+    const SlashCommandArgumentMod = globalThis.SlashCommandArgument;
+    const ARGUMENT_TYPE = globalThis.ARGUMENT_TYPE;
+    if (!SlashCommandParserMod?.addCommandObject || !SlashCommandMod?.fromProps) return;
+    const allKeys = Object.keys(DEFAULT_IH_SETTINGS);
+    SlashCommandParserMod.addCommandObject(
+      SlashCommandMod.fromProps({
+        name: "inputhistory-config",
+        callback: ({ key, get }, value) => {
+          if (!key) {
+            toastrError(`Required argument "key" missing for /inputhistory-config`);
+            return;
+          }
+          if (!allKeys.includes(key)) {
+            toastrError(`Invalid "key" argument "${key}" for /inputhistory-config`);
+            return;
+          }
+          const s = ihSettings();
+          if (isTrueBoolean(get)) {
+            toastrInfo(`Input History setting ${key} = ${JSON.stringify(s[key])}`);
+            return JSON.stringify(s[key]);
+          }
+          s[key] = SETTING_TYPES[key](value.trim());
+          updateButtonVisibility();
+          ihSave();
+        },
+        aliases: ["ih-config"],
+        namedArgumentList: [
+          SlashCommandNamedArgumentMod?.fromProps?.({
+            name: "key",
+            description: "Setting key to change or retrieve",
+            typeList: [ARGUMENT_TYPE?.STRING ?? "string"],
+            enumList: allKeys,
+            isRequired: true
+          }),
+          SlashCommandNamedArgumentMod?.fromProps?.({
+            name: "get",
+            description: "Retrieve value without changing",
+            typeList: [ARGUMENT_TYPE?.BOOLEAN ?? "boolean"],
+            isRequired: false,
+            defaultValue: "false",
+            enumList: ["true", "false"]
+          })
+        ].filter(Boolean),
+        unnamedArgumentList: [
+          SlashCommandArgumentMod?.fromProps?.({
+            description: "New config value",
+            typeList: [ARGUMENT_TYPE?.NUMBER ?? "number", ARGUMENT_TYPE?.BOOLEAN ?? "boolean"],
+            isRequired: false
+          })
+        ].filter(Boolean),
+        helpString: `Change ${MODULE_NAME2} settings. Use <code>get=true</code> to read current value.`
+      })
+    );
+    SlashCommandParserMod.addCommandObject(
+      SlashCommandMod.fromProps({
+        name: "inputhistory-add",
+        callback: (_args, value) => {
+          if (!value.trim()) {
+            toastrError("Required string missing for /inputhistory-add");
+            return;
+          }
+          addToInputHistory(value);
+        },
+        aliases: ["ih-add"],
+        unnamedArgumentList: [
+          SlashCommandArgumentMod?.fromProps?.({
+            description: "String to add to input history",
+            typeList: [ARGUMENT_TYPE?.STRING ?? "string"],
+            isRequired: true
+          })
+        ].filter(Boolean),
+        helpString: "Adds a string to Input History."
+      })
+    );
+  }
+
+  // src/input-history/index.ts
+  var lastTaValue = "";
+  function getTextarea() {
+    const el = document.getElementById("send_textarea");
+    return el instanceof HTMLTextAreaElement ? el : null;
+  }
+  function initButtons() {
+    const ta = getTextarea();
+    if (!ta) return;
+    placeButtons(ta);
+    updateButtonVisibility();
+  }
+  function onTaKeyDown(evt) {
+    if (!evt.altKey) return;
+    const ta = evt.currentTarget;
+    if (evt.key === "ArrowUp") {
+      evt.preventDefault();
+      evt.stopPropagation();
+      inputHistoryBack(ta);
+    } else if (evt.key === "ArrowDown") {
+      evt.preventDefault();
+      evt.stopPropagation();
+      inputHistoryForward(ta);
+    }
+  }
+  function onTaInput(evt) {
+    const ta = evt.currentTarget;
+    if (ta.value.trim()) lastTaValue = ta.value;
+    filterHistoryMenu(ta.value);
+  }
+  var boundTa = null;
+  function bindTextareaListeners() {
+    const ta = getTextarea();
+    if (!ta || ta === boundTa) return;
+    boundTa?.removeEventListener("keydown", onTaKeyDown);
+    boundTa?.removeEventListener("input", onTaInput);
+    ta.addEventListener("keydown", onTaKeyDown);
+    ta.addEventListener("input", onTaInput);
+    boundTa = ta;
+  }
+  function refreshIHPlacement() {
+    const ta = getTextarea();
+    if (ta) placeButtons(ta);
+    updateButtonVisibility();
+  }
+  function wireEvents() {
+    const es = globalThis.eventSource;
+    const types = globalThis.event_types;
+    if (!es || !types) {
+      window.addEventListener("DOMContentLoaded", wireEvents, { once: true });
+      return;
+    }
+    es.on(types.APP_READY, () => {
+      bindTextareaListeners();
+      initButtons();
+      registerSlashCommands();
+    });
+    es.on(types.GENERATION_STARTED, () => {
+      addToInputHistory(lastTaValue);
+    });
+  }
+  wireEvents();
+
   // src/index.ts
   var textarea = null;
   var wrapper = null;
@@ -494,6 +846,7 @@
     }
     queueMicrotask(() => {
       normalizingDom = false;
+      refreshIHPlacement();
     });
   }
   function placePreview(node) {

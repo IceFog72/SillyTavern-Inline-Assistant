@@ -1,6 +1,7 @@
 import { AUTOCOMPLETE_BUTTON_ID, DEFAULT_SETTINGS, EDITOR_CELL_ID, GHOST_ID, PREVIEW_ID, PREVIEW_TOGGLE_ID, SETTINGS_PANEL_ID, SOURCE_SELECT_ID } from './constants.js';
 import { context, log, save, settings } from './settings-store.js';
 import { compactSelectedLanguageLabel, fillLanguageSelect, getLanguageOptions, normalizeLanguageValue, selectOption } from './languages.js';
+import { refreshIHPlacement } from './input-history/index.js';
 
 
 let textarea = null;
@@ -370,6 +371,7 @@ function normalizeRuntimePlacement() {
 
     queueMicrotask(() => {
         normalizingDom = false;
+        refreshIHPlacement();
     });
 }
 
