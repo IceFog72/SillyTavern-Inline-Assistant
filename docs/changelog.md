@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Replaced single Mode select with independent Inline completion and Translation preview toggles.
+- Migrates legacy `mode` setting into `inlineEnabled` and `translationEnabled`.
+- Global Enabled switch now hides extension runtime buttons through feature gating.
+
 ## 0.1.0 TypeScript rewrite
 
 - Added TypeScript toolchain with `typescript`, `tsconfig.json`, `npm run check`, and `npm run build`.

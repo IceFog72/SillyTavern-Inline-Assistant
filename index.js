@@ -64,7 +64,8 @@
   });
   var DEFAULT_SETTINGS = Object.freeze({
     enabled: true,
-    mode: "both",
+    inlineEnabled: true,
+    translationEnabled: true,
     debounceMs: 500,
     minChars: 3,
     debug: false,
@@ -148,6 +149,11 @@
     const ctx = context();
     ctx.extensionSettings[MODULE_NAME] ??= structuredClone(DEFAULT_SETTINGS);
     const current = ctx.extensionSettings[MODULE_NAME];
+    if (typeof current.inlineEnabled !== "boolean" || typeof current.translationEnabled !== "boolean") {
+      current.inlineEnabled = current.mode !== "translate";
+      current.translationEnabled = current.mode !== "inline";
+    }
+    delete current.mode;
     for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
       current[key] ??= value;
     }
@@ -207,7 +213,8 @@
     fillLanguageSelect(source, true);
     fillLanguageSelect(target, false);
     bindInput("ia_enabled", "enabled", "checked");
-    bindInput("ia_mode", "mode");
+    bindInput("ia_inline_enabled", "inlineEnabled", "checked");
+    bindInput("ia_translation_enabled", "translationEnabled", "checked");
     bindInput("ia_debounce_ms", "debounceMs");
     bindInput("ia_min_chars", "minChars");
     bindInput("ia_debug", "debug", "checked");
@@ -468,7 +475,8 @@
   }
   function modeAllows(kind) {
     const s = settings();
-    return s.enabled && (s.mode === kind || s.mode === "both");
+    if (!s.enabled) return false;
+    return kind === "inline" ? s.inlineEnabled : s.translationEnabled;
   }
   function renderRuntime() {
     if (!preview || !ghost) return;
@@ -476,6 +484,8 @@
     preview.hidden = previewHidden;
     const source = document.getElementById(SOURCE_SELECT_ID);
     if (source) source.hidden = previewHidden;
+    const previewToggle = document.getElementById(PREVIEW_TOGGLE_ID);
+    if (previewToggle) previewToggle.hidden = !settings().enabled || !settings().translationEnabled;
     const autocompleteButton = document.getElementById(AUTOCOMPLETE_BUTTON_ID);
     if (autocompleteButton) autocompleteButton.hidden = !modeAllows("inline") || !settings().manualAutocomplete;
     ghost.hidden = !modeAllows("inline") || !completion;

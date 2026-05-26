@@ -9,6 +9,11 @@ export function settings() {
     const ctx = context();
     ctx.extensionSettings[MODULE_NAME] ??= structuredClone(DEFAULT_SETTINGS);
     const current = ctx.extensionSettings[MODULE_NAME];
+    if (typeof current.inlineEnabled !== 'boolean' || typeof current.translationEnabled !== 'boolean') {
+        current.inlineEnabled = current.mode !== 'translate';
+        current.translationEnabled = current.mode !== 'inline';
+    }
+    delete current.mode;
     for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
         current[key] ??= value;
     }
