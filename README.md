@@ -2,9 +2,7 @@
 
 An extension that brings inline autocomplete suggestions (a la GitHub Copilot), real-time translation preview, and visual input history navigation directly into your SillyTavern message editor.
 
-<img width="2560" height="1402" alt="image" src="https://github.com/user-attachments/assets/941bc4e6-d183-4a1a-a1cc-ffbc05652516" />
-
-* *You don't need to use [ProbablyTooManyTabs](https://github.com/IceFog72/SillyTavern-ProbablyTooManyTabs) to use Inline Assistant, but they integrate seamlessly.*
+<img width="1133" height="92" alt="image" src="https://github.com/user-attachments/assets/43be205a-7263-4318-a603-f036f7abb26a" />
 
 ---
 
