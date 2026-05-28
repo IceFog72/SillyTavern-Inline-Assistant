@@ -1,6 +1,6 @@
 # SillyTavern — Inline Assistant
 
-An extension that brings inline autocomplete suggestions (a la GitHub Copilot), real-time translation preview, and visual input history navigation directly into your SillyTavern message editor.
+An extension that brings inline autocomplete suggestions, real-time translation preview, and visual input history navigation directly into your SillyTavern message editor.
 
 <img width="1133" height="92" alt="image" src="https://github.com/user-attachments/assets/43be205a-7263-4318-a603-f036f7abb26a" />
 
@@ -140,4 +140,5 @@ Support my projects: [💸 PayPal](https://www.paypal.com/ncp/payment/ABWFG6Y3SR
 
 ## License
 
-GNU License - See [LICENSE](LICENSE) for details.
+This project is licensed under the **GNU General Public License v3.0** (GPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
