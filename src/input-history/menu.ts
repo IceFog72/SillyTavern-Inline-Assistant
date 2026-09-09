@@ -58,7 +58,8 @@ export async function showHistoryMenu(ta: HTMLTextAreaElement): Promise<void> {
         item.addEventListener('click', async () => {
             await hideHistoryMenu();
             ta.value = text;
-            ta.focus();
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            ta.focus({ preventScroll: true });
         });
 
         menu.append(item);

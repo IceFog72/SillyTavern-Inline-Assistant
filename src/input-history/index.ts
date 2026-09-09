@@ -2,7 +2,7 @@
  * InputHistory sub-module entry point.
  *
  * Registers event listeners, sets up keyboard shortcuts, and initialises the
- * history buttons.  Imported once by the Inline Assistant's main index.ts so
+ * history buttons. Imported once by the Inline Assistant's main index.ts so
  * it shares the same build bundle.
  */
 import { placeButtons, updateButtonVisibility } from './buttons.js';
@@ -58,8 +58,15 @@ function bindTextareaListeners(): void {
     boundTa = ta;
 }
 
+function initializeInputHistory(): void {
+    bindTextareaListeners();
+    initButtons();
+    registerSlashCommands();
+}
+
 /** Called when Inline Assistant fires its own normalizeRuntimePlacement so buttons stay in the right slot. */
 export function refreshIHPlacement(): void {
+    bindTextareaListeners();
     const ta = getTextarea();
     if (ta) placeButtons(ta);
     updateButtonVisibility();
@@ -67,26 +74,25 @@ export function refreshIHPlacement(): void {
 
 // ── ST event wiring ─────────────────────────────────────────────────────────
 
-type EventSourceLike = { on(event: string, cb: (...args: unknown[]) => void): void };
-
 function wireEvents(): void {
-    const es = (globalThis as Record<string, unknown>).eventSource as EventSourceLike | undefined;
-    const types = (globalThis as unknown as Record<string, Record<string, string>>).event_types;
-    if (!es || !types) {
-        // Retry once DOM has loaded
-        window.addEventListener('DOMContentLoaded', wireEvents, { once: true });
-        return;
+    const ctx = SillyTavern.getContext();
+    const es = ctx.eventSource;
+    const types = ctx.eventTypes;
+    if (!es || !types) return;
+
+    if (types.APP_READY) {
+        es.on(types.APP_READY, initializeInputHistory);
     }
 
-    es.on(types.APP_READY, () => {
-        bindTextareaListeners();
-        initButtons();
-        registerSlashCommands();
-    });
+    if (types.GENERATION_STARTED) {
+        es.on(types.GENERATION_STARTED, (...args: unknown[]) => {
+            const isDryRun = args[2] === true;
+            if (!isDryRun) addToInputHistory(lastTaValue);
+        });
+    }
 
-    es.on(types.GENERATION_STARTED, () => {
-        addToInputHistory(lastTaValue);
-    });
+    // Third-party extensions can also be loaded/reloaded after APP_READY.
+    initializeInputHistory();
 }
 
 wireEvents();

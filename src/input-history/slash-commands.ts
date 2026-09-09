@@ -13,6 +13,8 @@ const SETTING_TYPES: Record<SettingKey, (v: string) => SettingValue> = {
     showHistoryButton: isTrueBoolean,
 };
 
+let registered = false;
+
 function isTrueBoolean(v: string): boolean {
     return v?.toLowerCase?.() === 'true';
 }
@@ -25,19 +27,14 @@ function toastrInfo(msg: string): void {
 }
 
 export function registerSlashCommands(): void {
-    const SlashCommandParserMod = (globalThis as Record<string, unknown>).SlashCommandParser as {
-        addCommandObject?: (cmd: unknown) => void;
-    } | undefined;
-    const SlashCommandMod = (globalThis as Record<string, unknown>).SlashCommand as {
-        fromProps?: (props: unknown) => unknown;
-    } | undefined;
-    const SlashCommandNamedArgumentMod = (globalThis as Record<string, unknown>).SlashCommandNamedArgument as {
-        fromProps?: (props: unknown) => unknown;
-    } | undefined;
-    const SlashCommandArgumentMod = (globalThis as Record<string, unknown>).SlashCommandArgument as {
-        fromProps?: (props: unknown) => unknown;
-    } | undefined;
-    const ARGUMENT_TYPE = (globalThis as unknown as Record<string, Record<string, string>>).ARGUMENT_TYPE;
+    if (registered) return;
+
+    const ctx = SillyTavern.getContext();
+    const SlashCommandParserMod = ctx.SlashCommandParser;
+    const SlashCommandMod = ctx.SlashCommand;
+    const SlashCommandNamedArgumentMod = ctx.SlashCommandNamedArgument;
+    const SlashCommandArgumentMod = ctx.SlashCommandArgument;
+    const ARGUMENT_TYPE = ctx.ARGUMENT_TYPE;
 
     if (!SlashCommandParserMod?.addCommandObject || !SlashCommandMod?.fromProps) return;
 
@@ -105,4 +102,6 @@ export function registerSlashCommands(): void {
             helpString: 'Adds a string to Input History.',
         }),
     );
+
+    registered = true;
 }

@@ -4,10 +4,15 @@ import { hideHistoryMenu, showHistoryMenu } from './menu.js';
 import { ihSettings } from './settings.js';
 import { inputHistoryBack, inputHistoryForward } from './store.js';
 
+function getLiveTextarea(fallback: HTMLTextAreaElement): HTMLTextAreaElement {
+    const current = document.getElementById('send_textarea');
+    return current instanceof HTMLTextAreaElement ? current : fallback;
+}
+
 function makeIHButton(id: string, classes: string[], title: string): HTMLDivElement {
     const btn = document.createElement('div');
     btn.id = id;
-    btn.classList.add('stih--button', 'menu_button', ...classes);
+    btn.classList.add('stih--button', 'menu_button', 'menu_button_icon', ...classes);
     btn.title = title;
     return btn;
 }
@@ -22,19 +27,20 @@ export function createButtons(ta: HTMLTextAreaElement): HTMLDivElement {
     arrows.classList.add('stih--arrows');
 
     const prev = makeIHButton(IH_BTN_PREV_ID, ['fa-solid', 'fa-chevron-up'], 'Previous input');
-    prev.addEventListener('click', () => inputHistoryBack(ta));
+    prev.addEventListener('click', () => inputHistoryBack(getLiveTextarea(ta)));
     arrows.append(prev);
 
     const next = makeIHButton(IH_BTN_NEXT_ID, ['fa-solid', 'fa-chevron-down'], 'Next input');
-    next.addEventListener('click', () => inputHistoryForward(ta));
+    next.addEventListener('click', () => inputHistoryForward(getLiveTextarea(ta)));
     arrows.append(next);
 
     wrap.append(arrows);
 
     const historyBtn = makeIHButton(IH_BTN_HISTORY_ID, ['stih--menuTrigger', 'fa-solid', 'fa-clock-rotate-left'], 'Input History');
     historyBtn.addEventListener('click', () => {
-        showHistoryMenu(ta);
-        ta.focus();
+        const currentTa = getLiveTextarea(ta);
+        showHistoryMenu(currentTa);
+        currentTa.focus({ preventScroll: true });
     });
     wrap.append(historyBtn);
 

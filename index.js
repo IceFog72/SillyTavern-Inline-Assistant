@@ -289,7 +289,8 @@
       item.addEventListener("click", async () => {
         await hideHistoryMenu();
         ta.value = text;
-        ta.focus();
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+        ta.focus({ preventScroll: true });
       });
       menu.append(item);
     };
@@ -314,10 +315,14 @@
   }
 
   // src/input-history/buttons.ts
+  function getLiveTextarea(fallback) {
+    const current = document.getElementById("send_textarea");
+    return current instanceof HTMLTextAreaElement ? current : fallback;
+  }
   function makeIHButton(id, classes, title) {
     const btn = document.createElement("div");
     btn.id = id;
-    btn.classList.add("stih--button", "menu_button", ...classes);
+    btn.classList.add("stih--button", "menu_button", "menu_button_icon", ...classes);
     btn.title = title;
     return btn;
   }
@@ -329,16 +334,17 @@
     arrows.id = IH_ARROWS_WRAP_ID;
     arrows.classList.add("stih--arrows");
     const prev = makeIHButton(IH_BTN_PREV_ID, ["fa-solid", "fa-chevron-up"], "Previous input");
-    prev.addEventListener("click", () => inputHistoryBack(ta));
+    prev.addEventListener("click", () => inputHistoryBack(getLiveTextarea(ta)));
     arrows.append(prev);
     const next = makeIHButton(IH_BTN_NEXT_ID, ["fa-solid", "fa-chevron-down"], "Next input");
-    next.addEventListener("click", () => inputHistoryForward(ta));
+    next.addEventListener("click", () => inputHistoryForward(getLiveTextarea(ta)));
     arrows.append(next);
     wrap.append(arrows);
     const historyBtn = makeIHButton(IH_BTN_HISTORY_ID, ["stih--menuTrigger", "fa-solid", "fa-clock-rotate-left"], "Input History");
     historyBtn.addEventListener("click", () => {
-      showHistoryMenu(ta);
-      ta.focus();
+      const currentTa = getLiveTextarea(ta);
+      showHistoryMenu(currentTa);
+      currentTa.focus({ preventScroll: true });
     });
     wrap.append(historyBtn);
     return wrap;
@@ -373,6 +379,7 @@
     showArrowButtons: isTrueBoolean,
     showHistoryButton: isTrueBoolean
   };
+  var registered = false;
   function isTrueBoolean(v) {
     return v?.toLowerCase?.() === "true";
   }
@@ -383,11 +390,13 @@
     globalThis.toastr?.info?.(msg);
   }
   function registerSlashCommands() {
-    const SlashCommandParserMod = globalThis.SlashCommandParser;
-    const SlashCommandMod = globalThis.SlashCommand;
-    const SlashCommandNamedArgumentMod = globalThis.SlashCommandNamedArgument;
-    const SlashCommandArgumentMod = globalThis.SlashCommandArgument;
-    const ARGUMENT_TYPE = globalThis.ARGUMENT_TYPE;
+    if (registered) return;
+    const ctx = SillyTavern.getContext();
+    const SlashCommandParserMod = ctx.SlashCommandParser;
+    const SlashCommandMod = ctx.SlashCommand;
+    const SlashCommandNamedArgumentMod = ctx.SlashCommandNamedArgument;
+    const SlashCommandArgumentMod = ctx.SlashCommandArgument;
+    const ARGUMENT_TYPE = ctx.ARGUMENT_TYPE;
     if (!SlashCommandParserMod?.addCommandObject || !SlashCommandMod?.fromProps) return;
     const allKeys = Object.keys(DEFAULT_IH_SETTINGS);
     SlashCommandParserMod.addCommandObject(
@@ -460,6 +469,7 @@
         helpString: "Adds a string to Input History."
       })
     );
+    registered = true;
   }
 
   // src/input-history/index.ts
@@ -502,26 +512,32 @@
     ta.addEventListener("input", onTaInput);
     boundTa = ta;
   }
+  function initializeInputHistory() {
+    bindTextareaListeners();
+    initButtons();
+    registerSlashCommands();
+  }
   function refreshIHPlacement() {
+    bindTextareaListeners();
     const ta = getTextarea();
     if (ta) placeButtons(ta);
     updateButtonVisibility();
   }
   function wireEvents() {
-    const es = globalThis.eventSource;
-    const types = globalThis.event_types;
-    if (!es || !types) {
-      window.addEventListener("DOMContentLoaded", wireEvents, { once: true });
-      return;
+    const ctx = SillyTavern.getContext();
+    const es = ctx.eventSource;
+    const types = ctx.eventTypes;
+    if (!es || !types) return;
+    if (types.APP_READY) {
+      es.on(types.APP_READY, initializeInputHistory);
     }
-    es.on(types.APP_READY, () => {
-      bindTextareaListeners();
-      initButtons();
-      registerSlashCommands();
-    });
-    es.on(types.GENERATION_STARTED, () => {
-      addToInputHistory(lastTaValue);
-    });
+    if (types.GENERATION_STARTED) {
+      es.on(types.GENERATION_STARTED, (...args) => {
+        const isDryRun = args[2] === true;
+        if (!isDryRun) addToInputHistory(lastTaValue);
+      });
+    }
+    initializeInputHistory();
   }
   wireEvents();
 
